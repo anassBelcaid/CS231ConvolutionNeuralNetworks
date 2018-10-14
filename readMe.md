@@ -8,3 +8,4 @@ Here is the link to the [lectures](https://www.youtube.com/playlist?list=PL3FW7L
 
 ## Syllabus ##
 
+**Week 1** : Introduction, Computer Vision overview, Historical context. [lecture](./week1/cs231n_2018_lecture01.pdf)
