@@ -71,7 +71,7 @@ class KNearestNeighbor(object):
         # training point, and store the result in dists[i, j]. You should   #
         # not use a loop over dimension.                                    #
         #####################################################################
-        pass
+        dists[i, j] = np.linalg.norm(self.X_train[j, :]- X[i, :])
         #####################################################################
         #                       END OF YOUR CODE                            #
         #####################################################################
@@ -93,7 +93,7 @@ class KNearestNeighbor(object):
       # Compute the l2 distance between the ith test point and all training #
       # points, and store the result in dists[i, :].                        #
       #######################################################################
-      pass
+      dists[i,:] = np.linalg.norm( self.X_train - X[i,:],axis=1)
       #######################################################################
       #                         END OF YOUR CODE                            #
       #######################################################################
@@ -153,7 +153,7 @@ class KNearestNeighbor(object):
       # neighbors. Store these labels in closest_y.                           #
       # Hint: Look up the function numpy.argsort.                             #
       #########################################################################
-      pass
+      closest_y  = self.y_train[np.argsort(dists[i,:])[:k]]
       #########################################################################
       # TODO:                                                                 #
       # Now that you have found the labels of the k nearest neighbors, you    #
@@ -161,7 +161,14 @@ class KNearestNeighbor(object):
       # Store this label in y_pred[i]. Break ties by choosing the smaller     #
       # label.                                                                #
       #########################################################################
-      pass
+      #value and count for each value
+      values,counts= np.unique(closest_y,return_counts=True)
+      #possible values
+      val=np.array([v for (i,v) in enumerate(values) if
+          counts[i]==np.max(counts)])
+      #breaking ties by  the smallest
+      y_pred[i]=np.min(val)
+
       #########################################################################
       #                           END OF YOUR CODE                            # 
       #########################################################################
