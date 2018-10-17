@@ -82,16 +82,33 @@ def svm_loss_vectorized(W, X, y, reg):
 
   #correct score for each example
   I = np.arange(X.shape[0])    # 0.... num_examples
+  D,C = W.shape
   correct_scores = scores[I,y]
 
   #computing the differences
   loss = scores - correct_scores[:,np.newaxis]+1
+  mask = (loss>0)
+  dW= X.T.dot(mask)
+
+  #adding the negative elements
+  sum_scores = np.zeros_like(scores)
+  sum_scores[I,y] = np.sum(mask, axis=1)
+
+
+  # removing the sum over each example
+  dW = dW - np.dot(X.T,sum_scores)
+  
+  #adding the score elements
+  dW/= X.shape[0]
   
   #making entries for the correct class null
   loss[I,y]=0
 
   #taking the maximum
   loss = np.maximum(loss,0)
+
+  #here I should compute the grad
+
 
   #somming over the class
   loss = np.sum(loss,axis=1)
@@ -111,6 +128,7 @@ def svm_loss_vectorized(W, X, y, reg):
   # loss.                                                                     #
   #############################################################################
   loss = np.mean(loss)
+  loss += reg * np.sum(W * W)
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
