@@ -90,13 +90,29 @@ class TwoLayerNet(object):
 
     # Compute the loss
     loss = None
+    N,D = h_layer.shape
     #############################################################################
     # TODO: Finish the forward pass, and compute the loss. This should include  #
     # both the data loss and L2 regularization for W1 and W2. Store the result  #
     # in the variable loss, which should be a scalar. Use the Softmax           #
     # classifier loss.                                                          #
     #############################################################################
-    pass
+    #computing the soft max score
+    #shifted scores
+    shf_scores = scores - np.max(scores,axis=1)[:,np.newaxis]
+    shf_scores = np.exp(shf_scores)
+    shf_scores /= np.sum(shf_scores,axis=1)[:,np.newaxis]
+
+    #scores of the correct classes
+    I = np.arange(N)
+    shf_scores =shf_scores[I,y]
+
+    shf_scores = -np.log(shf_scores)
+    loss = np.mean(shf_scores)
+    
+
+    #add the regularization term in the first W2
+    loss+= reg*( np.sum(W2**2)+ np.sum(W1**2))
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
