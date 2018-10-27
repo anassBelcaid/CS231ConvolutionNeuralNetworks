@@ -2,6 +2,9 @@ from __future__ import print_function
 
 import numpy as np
 import matplotlib.pyplot as plt
+from cs231n.classifiers.softmax import softmax_loss_vectorized
+from utils import soft_max
+
 
 class TwoLayerNet(object):
   """
@@ -67,6 +70,7 @@ class TwoLayerNet(object):
     W1, b1 = self.params['W1'], self.params['b1']
     W2, b2 = self.params['W2'], self.params['b2']
     N, D = X.shape
+    D, M = W2.shape
 
     # Compute the forward pass
     scores = None
@@ -76,10 +80,19 @@ class TwoLayerNet(object):
     # shape (N, C).                                                             #
     #############################################################################
     #first layer
-    h_layer = np.maximum(X.dot(W1)+b1,0)
+    scores_first= X.dot(W1)+b1;
+    mask_first= (scores_first<0)
+    h_layer = np.maximum(scores_first,0)
 
-    #output
-    scores = h_layer.dot(W2)+b2 
+    #scores
+    scores = np.dot(h_layer,W2)+b2
+
+    #computing the softmax loss and gradient
+    loss,grad = soft_max(scores,y)
+    
+    loss+= reg*(np.sum(W2**2)+np.sum(W1**2))
+
+
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -89,8 +102,8 @@ class TwoLayerNet(object):
       return scores
 
     # Compute the loss
-    loss = None
     N,D = h_layer.shape
+    I = np.arange(N)
     #############################################################################
     # TODO: Finish the forward pass, and compute the loss. This should include  #
     # both the data loss and L2 regularization for W1 and W2. Store the result  #
@@ -98,35 +111,43 @@ class TwoLayerNet(object):
     # classifier loss.                                                          #
     #############################################################################
     #computing the soft max score
-    #shifted scores
-    shf_scores = scores - np.max(scores,axis=1)[:,np.newaxis]
-    shf_scores = np.exp(shf_scores)
-    shf_scores /= np.sum(shf_scores,axis=1)[:,np.newaxis]
-
-    #scores of the correct classes
-    I = np.arange(N)
-    shf_scores =shf_scores[I,y]
-
-    shf_scores = -np.log(shf_scores)
-    loss = np.mean(shf_scores)
     
-
-    #add the regularization term in the first W2
-    loss+= reg*( np.sum(W2**2)+ np.sum(W1**2))
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
 
     # Backward pass: compute gradients
     grads = {}
+
+
     #############################################################################
     # TODO: Compute the backward pass, computing the derivatives of the weights #
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    pass
     #############################################################################
     #                              END OF YOUR CODE                             #
+    #gradient is equal to grad_i = p_i _yi
+    # pi are the proabilities and y_i is a one hot description for the class
+    YI= np.zeros_like(scores);
+    P=scores-np.max(scores,axis=1,keepdims=True)
+    P=np.exp(P)
+    P/=np.sum(P,axis=1,keepdims=1)
+    YI[I,y]=1
+    gradSoft= (P-YI)/N
+    #computing the gradient of the first layer
+    grads['W2']= np.dot(h_layer.T,gradSoft)+2*reg*W2
+    grads['b2']=np.dot(gradSoft.T,np.ones(N))
+    
+    #grad relu
+    h_layer_grad=np.dot(gradSoft,W2.T)
+    h_layer_grad[mask_first]=0
+    grads['W1']=np.dot(X.T,h_layer_grad)+2*reg*W1
+    grads['b1']=np.dot(h_layer_grad.T,np.ones(N))
+
+    #computing the grad after relu
+
+    #computing the scores for the gradient
     #############################################################################
 
     return loss, grads
