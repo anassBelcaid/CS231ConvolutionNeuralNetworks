@@ -28,6 +28,10 @@ def affine_forward(x, w, b):
     #reshaping the input in size( N*D)
     N = x.shape[0]
     X = np.reshape(x,(N,-1))
+    # print("initial x shape:",x.shape)
+    # print("flatten shape:",X.shape)
+    # print("weight shape",w.shape)
+    # print("b shape: ",b.shape)
 
     #computing the output
     out = np.dot(X,w)+b
