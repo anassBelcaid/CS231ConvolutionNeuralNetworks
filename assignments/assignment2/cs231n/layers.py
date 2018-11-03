@@ -203,7 +203,24 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # Referencing the original paper (https://arxiv.org/abs/1502.03167)   #
         # might prove to be helpful.                                          #
         #######################################################################
-        pass
+        #batch statistics
+        mean = np.mean(x, axis=0, keepdims=True)
+        var =  np.var(x, axis=0, keepdims=True)
+
+
+        #computing the xhat transformation
+        out = (x -mean)/np.sqrt(var+eps)
+
+        #linear transformation 
+        out = gamma*out + beta
+
+        #updatete the running mean
+        running_mean = momentum*running_mean + (1-momentum)*mean
+        running_var  = momentum*running_var + (1-momentum)*var
+
+        #saving the cache
+        cache = x, mean, var, gamma, beta,eps
+
         #######################################################################
         #                           END OF YOUR CODE                          #
         #######################################################################
@@ -214,7 +231,8 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # then scale and shift the normalized data using gamma and beta.      #
         # Store the result in the out variable.                               #
         #######################################################################
-        pass
+        out = (x-running_mean)/np.sqrt(running_var+eps)
+        out = gamma*out + beta
         #######################################################################
         #                          END OF YOUR CODE                           #
         #######################################################################
@@ -224,6 +242,8 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     # Store the updated running means back into bn_param
     bn_param['running_mean'] = running_mean
     bn_param['running_var'] = running_var
+
+    #storing the cache 
 
     return out, cache
 
@@ -252,7 +272,34 @@ def batchnorm_backward(dout, cache):
     # Referencing the original paper (https://arxiv.org/abs/1502.03167)       #
     # might prove to be helpful.                                              #
     ###########################################################################
-    pass
+    x, mean , var, gamma, beta,eps = cache
+    m = dout.shape[0]
+    x_hat= (x-mean)/np.sqrt(var+eps)
+    dx = np.zeros_like(x)
+
+    #Computing the easiest one (dbeta :) ) 
+    dbeta = np.sum(dout,axis=0)
+
+    #now for dgamma
+    dgamma = np.sum(dout*x_hat, axis=0) 
+
+
+    #now for the most difficult one
+    dx_hat = dout * gamma
+    
+    #gradient over the std
+    d_sigma = dx_hat* (x-mean)* (-0.5*( var+eps)**(-3/2))
+    d_sigma= np.sum(d_sigma, axis=0)
+
+    #gradient over the mean
+    d_mean = dx_hat *( -1/np.sqrt(var+eps))
+    d_mean = np.sum(d_mean,axis=0)
+    d_mean += d_sigma* (np.mean(-2*(x-mean),axis=0))
+    
+    #Moment of truth
+    dx = dx_hat * 1/np.sqrt(var+eps) + (2/m)*d_sigma*(x-mean) +(1/m)* d_mean
+    
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
