@@ -182,6 +182,7 @@ class FullyConnectedNet(object):
         self.num_layers = 1 + len(hidden_dims)
         self.dtype = dtype
         self.params = {}
+        self.drop_cache = {}
         self.caches =  {}
 
         ############################################################################
@@ -314,6 +315,10 @@ class FullyConnectedNet(object):
                 #computing the combined relu layer
                 layer,self.caches[k] = affine_relu_forward(layer, w, b)
 
+            #dropout
+            if(self.use_dropout):
+                layer,self.drop_cache[k] = dropout_forward(layer,self.dropout_param)
+
             #next level
             k+=1
 
@@ -354,6 +359,10 @@ class FullyConnectedNet(object):
         k-=1
         #loop over the rest of the layer
         while(k>0):
+            #drop out 
+            if(self.use_dropout):
+                dout = dropout_backward(dout, self.drop_cache[k])
+
             if self.normalization=='batchnorm':
                 dout,grads['W%d'%k],grads['b%d'%k],grads['gamma%d'%k],grads['beta%d'%k] = affine_relu_norm_backward(dout,self.caches[k])
             elif self.normalization=='layernorm':
