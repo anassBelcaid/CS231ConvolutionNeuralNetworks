@@ -203,6 +203,10 @@ class FullyConnectedNet(object):
         if self.normalization=='batchnorm':
             self.params['gamma1']= np.random.normal(loc=0,size=hidden_dims[0])
             self.params['beta1'] = np.random.normal(loc=0,size=hidden_dims[0])
+        #layer normalisation
+        if self.normalization=='layernorm':
+            self.params['gamma1']= np.random.normal(loc=0,size=hidden_dims[0])
+            self.params['beta1'] = np.random.normal(loc=0,size=hidden_dims[0])
         
 
         #initializing the rest of the keys
@@ -211,6 +215,10 @@ class FullyConnectedNet(object):
             self.params['W%d'%k] = np.random.normal(loc = 0, size = (d1,d2), scale = weight_scale)
             self.params['b%d'%k] = np.zeros(d2)
             if self.normalization=='batchnorm':
+                self.params['gamma%d'%k]=np.random.normal(loc=0,size=d2)
+                self.params['beta%d'%k] = np.random.normal(loc=0,size=d2)
+            #layer
+            if self.normalization=='layernorm':
                 self.params['gamma%d'%k]=np.random.normal(loc=0,size=d2)
                 self.params['beta%d'%k] = np.random.normal(loc=0,size=d2)
 
@@ -298,6 +306,10 @@ class FullyConnectedNet(object):
                 beta, gamma = self.params['beta%d'%k], self.params['gamma%d'%k]
                 layer, self.caches[k] = affine_relu_norm_forward(layer, w, b,
                         gamma, beta, self.bn_params[i])
+            elif self.normalization=='layernorm':
+                beta, gamma = self.params['beta%d'%k], self.params['gamma%d'%k]
+                layer, self.caches[k] = affine_relu_laynorm_forward(layer, w, b,
+                        gamma, beta, self.bn_params[i])
             else:
                 #computing the combined relu layer
                 layer,self.caches[k] = affine_relu_forward(layer, w, b)
@@ -344,6 +356,8 @@ class FullyConnectedNet(object):
         while(k>0):
             if self.normalization=='batchnorm':
                 dout,grads['W%d'%k],grads['b%d'%k],grads['gamma%d'%k],grads['beta%d'%k] = affine_relu_norm_backward(dout,self.caches[k])
+            elif self.normalization=='layernorm':
+                dout,grads['W%d'%k],grads['b%d'%k],grads['gamma%d'%k],grads['beta%d'%k]= affine_relu_laynorm_backward(dout,self.caches[k])
             else:
                 dout, grads['W%d'%k], grads['b%d'%k] = affine_relu_backward(dout,self.caches[k])
 
