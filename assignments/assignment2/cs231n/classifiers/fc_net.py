@@ -200,13 +200,19 @@ class FullyConnectedNet(object):
         self.params['W1'] = np.random.normal(loc = 0, size= (input_dim,
             hidden_dims[0]), scale = weight_scale)
         self.params['b1'] = np.zeros(hidden_dims[0])
+        if self.normalization=='batchnorm':
+            self.params['gamma1']= np.random.normal(loc=0,size=hidden_dims[0])
+            self.params['beta1'] = np.random.normal(loc=0,size=hidden_dims[0])
+        
 
         #initializing the rest of the keys
         k=2
         for (d1,d2)  in zip(hidden_dims[:-1],hidden_dims[1:]):
-            self.params['W%d'%k] = np.random.normal(loc = 0, size = (d1,d2),
-                    scale = weight_scale)
+            self.params['W%d'%k] = np.random.normal(loc = 0, size = (d1,d2), scale = weight_scale)
             self.params['b%d'%k] = np.zeros(d2)
+            if self.normalization=='batchnorm':
+                self.params['gamma%d'%k]=np.random.normal(loc=0,size=d2)
+                self.params['beta%d'%k] = np.random.normal(loc=0,size=d2)
 
             k+=1
 
@@ -286,8 +292,15 @@ class FullyConnectedNet(object):
         for i in range(self.num_layers-1):
             #extracting the coefficients
             w, b = self.params['W%d'%k], self.params['b%d'%k]
-            #computing the combined relu layer
-            layer,self.caches[k] = affine_relu_forward(layer, w, b)
+
+            #check normaisation
+            if self.normalization=='batchnorm':
+                beta, gamma = self.params['beta%d'%k], self.params['gamma%d'%k]
+                layer, self.caches[k] = affine_relu_norm_forward(layer, w, b,
+                        gamma, beta, self.bn_params[i])
+            else:
+                #computing the combined relu layer
+                layer,self.caches[k] = affine_relu_forward(layer, w, b)
 
             #next level
             k+=1
@@ -295,12 +308,6 @@ class FullyConnectedNet(object):
         #softmax layer
         w,b = self.params['W%d'%k], self.params['b%d'%k]
         scores,self.caches[k] = affine_forward(layer, w,b)
-
-
-
-
-
-
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -335,7 +342,11 @@ class FullyConnectedNet(object):
         k-=1
         #loop over the rest of the layer
         while(k>0):
-            dout, grads['W%d'%k], grads['b%d'%k] = affine_relu_backward(dout,self.caches[k])
+            if self.normalization=='batchnorm':
+                dout,grads['W%d'%k],grads['b%d'%k],grads['gamma%d'%k],grads['beta%d'%k] = affine_relu_norm_backward(dout,self.caches[k])
+            else:
+                dout, grads['W%d'%k], grads['b%d'%k] = affine_relu_backward(dout,self.caches[k])
+
             k-=1
 
 
