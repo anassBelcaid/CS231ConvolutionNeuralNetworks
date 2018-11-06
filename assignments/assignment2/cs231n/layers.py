@@ -615,7 +615,15 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the convolutional backward pass.                        #
     ###########################################################################
-    pass
+    x, w, b, conv_param = cache
+    dx = np.zeros_like(x)
+    dw = np.zeros_like(w)
+    print("x shape:",x.shape)
+    print("w shape: ",w.shape)
+    print("dout shape:", dout.shape)
+    
+    #db is simply summing over the all axis exept the filter
+    db = np.sum(dout,axis=(0,2,3))
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -645,7 +653,25 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # TODO: Implement the max-pooling forward pass                            #
     ###########################################################################
-    pass
+    #computing the dimensions
+    N, C, H, W = x.shape
+    pool_height, pool_width, stride = \
+    pool_param['pool_height'],pool_param['pool_width'], pool_param['stride']
+    H1 = 1 + (H - pool_height) // stride
+    W1 = 1 + (W - pool_width) // stride
+
+    #inialiation
+    out = np.zeros((N,C,H1,W1))
+
+    #loop on images
+    for image in range(N):
+        #loop on channel ( or filters)
+        for c in range(C):
+            for (i,i1) in zip(range(H1), range(0,H,stride)):
+                    for (j,j1) in zip(range(W1), range(0,W,stride)):
+                        local_slice =  x[image,c,i1:i1+pool_height, j1:j1+pool_height]
+                        out[image,c,i,j]= np.max(local_slice)
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -668,7 +694,27 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the max-pooling backward pass                           #
     ###########################################################################
-    pass
+    x, pool_param = cache
+    dx = np.zeros_like(x)
+
+    #extracting the cache
+    N, C, H, W = x.shape
+    pool_height, pool_width, stride = \
+    pool_param['pool_height'],pool_param['pool_width'], pool_param['stride']
+    H1 = 1 + (H - pool_height) // stride
+    W1 = 1 + (W - pool_width) // stride
+
+    #gradient of the poooling 
+    for image in range(N):
+        for c in range(C):
+            for (i,i1) in zip(range(H1), range(0,H,stride)):
+                    for (j,j1) in zip(range(W1), range(0,W,stride)):
+                        #equallity 
+                        Slice =x[image,c,i1:i1+pool_width,j1:j1+pool_height]
+                        mask = (Slice == np.max(Slice))
+                        dx[image,c,i1:i1+pool_width,j1:j1+pool_height][mask]= dout[image,c,i,j] 
+                        
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
