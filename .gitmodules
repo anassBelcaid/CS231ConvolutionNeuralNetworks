@@ -1,3 +1,6 @@
 [submodule "projectProposal7/hed"]
 	path = projectProposal7/hed
 	url = https://github.com/s9xie/hed.git
+[submodule "lecture8/pytorch-examples"]
+	path = lecture8/pytorch-examples
+	url = https://github.com/jcjohnson/pytorch-examples.git
