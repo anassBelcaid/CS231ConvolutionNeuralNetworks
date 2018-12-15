@@ -34,7 +34,16 @@ def rnn_step_forward(x, prev_h, Wx, Wh, b):
     # hidden state and any values you need for the backward pass in the next_h   #
     # and cache variables respectively.                                          #
     ##############################################################################
-    pass
+
+    ## Vanilla formula for  the hidden state
+    hidden = x.dot(Wx) + prev_h.dot(Wh)+ b
+
+    # non linearity
+    next_h = np.tanh(hidden)
+
+    
+    #caches
+    cache = x, prev_h, Wx, Wh, b,hidden
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -56,14 +65,25 @@ def rnn_step_backward(dnext_h, cache):
     - dWh: Gradients of hidden-to-hidden weights, of shape (H, H)
     - db: Gradients of bias vector, of shape (H,)
     """
-    dx, dprev_h, dWx, dWh, db = None, None, None, None, None
+    x, prev_h, Wx, Wh, b,hidden = cache
     ##############################################################################
     # TODO: Implement the backward pass for a single step of a vanilla RNN.      #
     #                                                                            #
     # HINT: For the tanh function, you can compute the local derivative in terms #
     # of the output value from tanh.                                             #
     ##############################################################################
-    pass
+
+    #computing the tanh gradient
+    dtanh = 1-np.tanh(hidden)**2
+    dtanh= dtanh*dnext_h
+    dx = np.dot(dtanh, Wx.T)
+    db = np.sum(dtanh, axis=0)
+    dprev_h = np.dot(dtanh, Wh.T)
+    dWx = np.dot(x.T, dtanh)
+    dWh = np.dot(prev_h.T, dtanh)
+
+
+
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
