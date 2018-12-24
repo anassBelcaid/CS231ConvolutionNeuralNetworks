@@ -241,7 +241,31 @@ class CaptioningRNN(object):
         # NOTE: we are still working over minibatches in this function. Also if   #
         # you are using an LSTM, initialize the first cell state to zeros.        #
         ###########################################################################
-        pass
+
+        #initialiation
+        current_states = self._start*np.ones(N,dtype='int32')
+        
+        #initial hidden state
+        prev_h,_ = affine_forward(features,W_proj,b_proj)
+
+        #main loop for computing the words
+        for i in range(max_length):
+            # step 1 embed the word using the word embedding matrix
+            words, _ =  word_embedding_forward(current_states, W_embed)
+
+            # step 2 = make a rnn step using the the actual words
+            next_h, _ = rnn_step_forward(words,prev_h,Wx,Wh,b)
+            prev_h = next_h
+
+            # step 3 = Apply the affine transformation to get the scores 
+            scores,_ = affine_forward(next_h, W_vocab, b_vocab)
+
+            # step 4: writing the word in its slot
+            captions[:,i]= np.argmax(scores,axis=1)
+
+
+
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
