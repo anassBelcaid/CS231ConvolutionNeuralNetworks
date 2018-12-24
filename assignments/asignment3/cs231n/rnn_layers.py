@@ -286,7 +286,26 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
     # TODO: Implement the forward pass for a single timestep of an LSTM.        #
     # You may want to use the numerically stable sigmoid implementation above.  #
     #############################################################################
-    pass
+    
+    # step one compute the four scores
+    output =  x.dot(Wx) + prev_h.dot(Wh)+b
+
+    #splitting the array into the four  LSTM gates
+    a_I,a_F,a_O,a_G = np.split(output,4,axis=1)
+
+    # applying the non linearities
+    I, F, O, G = sigmoid(a_I), sigmoid(a_F), sigmoid(a_O), np.tanh(a_G)
+
+    # next cell state
+    next_c = F*prev_c + I*G    
+
+
+    #next hidden state
+    next_h  = O*np.tanh(next_c)
+    
+
+
+
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -353,7 +372,10 @@ def lstm_forward(x, h0, Wx, Wh, b):
     # TODO: Implement the forward pass for an LSTM over an entire timeseries.   #
     # You should use the lstm_step_forward function that you just defined.      #
     #############################################################################
-    pass
+    
+    #compute the new hidden state
+
+
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
