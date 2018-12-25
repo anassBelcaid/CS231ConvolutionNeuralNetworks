@@ -148,7 +148,10 @@ class CaptioningRNN(object):
         words_in, word_embedding_cache = word_embedding_forward(captions_in, W_embed)
 
         #step 3 forward rnn
-        rnn_h , rnn_cache=rnn_forward(words_in,hidden_state,Wx,Wh,b)
+        if(self.cell_type=='rnn'):
+            rnn_h , rnn_cache=rnn_forward(words_in,hidden_state,Wx,Wh,b)
+        else:
+            rnn_h,rnn_cache = lstm_forward(words_in,hidden_state,Wx,Wh,b)
 
         #step 4 : temporal scores
         scores, scores_cache = temporal_affine_forward(rnn_h,W_vocab,b_vocab)
@@ -161,7 +164,10 @@ class CaptioningRNN(object):
         # step 6 backpropagation
         dX, grads['W_vocab'],grads['b_vocab'] = temporal_affine_backward(dout,scores_cache)
 
-        dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(dX,rnn_cache)
+        if(self.cell_type=='rnn'):
+            dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(dX,rnn_cache)
+        else:
+            dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = lstm_backward(dX,rnn_cache)
 
         #backward word embedding
         grads['W_embed']= word_embedding_backward(dx,word_embedding_cache)
@@ -247,6 +253,7 @@ class CaptioningRNN(object):
         
         #initial hidden state
         prev_h,_ = affine_forward(features,W_proj,b_proj)
+        prev_c = np.zeros_like(prev_h)
 
         #main loop for computing the words
         for i in range(max_length):
@@ -254,7 +261,10 @@ class CaptioningRNN(object):
             words, _ =  word_embedding_forward(current_states, W_embed)
 
             # step 2 = make a rnn step using the the actual words
-            next_h, _ = rnn_step_forward(words,prev_h,Wx,Wh,b)
+            if(self.cell_type=='rnn'):
+                next_h, _ = rnn_step_forward(words,prev_h,Wx,Wh,b)
+            else:
+                next_h,prev_c,_ = lstm_step_forward(words,prev_h,prev_c,Wx,Wh,b)
             prev_h = next_h
 
             # step 3 = Apply the affine transformation to get the scores 
