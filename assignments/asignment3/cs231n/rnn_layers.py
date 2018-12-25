@@ -303,6 +303,7 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
     #next hidden state
     next_h  = O*np.tanh(next_c)
     
+    cache = x,prev_c,prev_h,next_c,next_h,Wx,Wh,b,I,F,O,G,a_I,a_F,a_O,a_G
 
 
 
@@ -337,7 +338,39 @@ def lstm_step_backward(dnext_h, dnext_c, cache):
     # HINT: For sigmoid and tanh you can compute local derivatives in terms of  #
     # the output value from the nonlinearity.                                   #
     #############################################################################
-    pass
+    #extracing the cache
+    # F = cache
+    x,prev_c,prev_h,next_c,next_h,Wx,Wh,b,I,F,O,G,a_I,a_F,a_O,a_G = cache
+
+    #computing the gradients
+
+    #intermediate derivatives
+    dO = dnext_h*np.tanh(next_c)
+    dnext_c+=O*(1-np.tanh(next_c)**2)*dnext_h
+    dF = dnext_c*prev_c;
+    dI = dnext_c* G
+    dG = dnext_c* I
+
+
+    #backpropagation throught the non linearities
+    d_aI = sigmoid(a_I)*(1-sigmoid(a_I))*dI
+    d_aF = sigmoid(a_F)*(1-sigmoid(a_F))*dF
+    d_aO = sigmoid(a_O)*(1-sigmoid(a_O))*dO
+    d_aG = (1-np.tanh(a_G)**2)*dG
+
+    #stacking the non linearities
+    da= np.hstack((d_aI,d_aF,d_aO,d_aG))
+
+
+
+    #derivative for c comes from two participation
+    dx = np.dot(da,Wx.T)
+    dWx = np.dot(x.T,da)
+    dprev_h = np.dot(da,Wh.T)
+    dprev_c = F* dnext_c 
+    dWh = np.dot(prev_h.T,da) 
+    db  = np.sum(da,axis=0) 
+
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
